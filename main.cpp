@@ -1,5 +1,6 @@
 #include "main.h"
-
+int node_num=0;
+int bst_node_num=0;
 
 int main(int argc, char* argv[])
 {
@@ -13,8 +14,9 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-void Loaded_LIST::Add_linklist(string name, string dir, string num){
+void Loaded_LIST::Add_linklist(string name, string dir, int num){
     Loaded_LIST_Node* currNode=img_head;
+    Loaded_LIST_Node* prevNode;
     Loaded_LIST_Node* newNode = new Loaded_LIST_Node;
     
     newNode->img_name = name;
@@ -24,19 +26,20 @@ void Loaded_LIST::Add_linklist(string name, string dir, string num){
     int pass_num = 0;
     while(1)
     {
-        if(currNode->dirname==dir){
+        if(currNode->dirname==dir){ //e디렉토리 노드 참음
             pass_num=1;
             break;
         }
-        if(currNode->down ==NULL){
+        if(currNode->down ==NULL){ //디렉토리에서의 마지막 노드일때까지 대릭테로리노드 못찾으면
             break;
         }
         currNode=currNode->down;
     }
-    if(pass_num==0){
-        Loaded_LIST_Node* new_dirnode= new Loaded_LIST_Node;
+    if(pass_num==0){ //디렉토리에서의 마지막 노드임
+        Loaded_LIST_Node* new_dirnode= new Loaded_LIST_Node; //새로운 대렉토리 노드를 만들어줄것
         new_dirnode->dirname=dir;
         currNode->down = new_dirnode;
+        new_dirnode->up = currNode;
         //currNode = currNode->down;
     }
     Loaded_LIST_Node* new_currNode = new Loaded_LIST_Node;
@@ -46,10 +49,11 @@ void Loaded_LIST::Add_linklist(string name, string dir, string num){
         new_currNode=new_currNode->next;
     }
     new_currNode->next=newNode;
+    newNode->back=new_currNode;
     return ;
 }
 
-void Loaded_LIST::Load_linklist(string name, string dir, string num) {
+void Loaded_LIST::Load_linklist(string name, string dir, int num) {
     Loaded_LIST_Node* newNode = new Loaded_LIST_Node;
     newNode->img_name = name;
     newNode->dirname = dir;
@@ -68,6 +72,7 @@ void Loaded_LIST::Load_linklist(string name, string dir, string num) {
     }
 
     CurrNode->next = newNode;
+    newNode->back = CurrNode;
     return;
 }
 void Loaded_LIST::Load_list_print() {
@@ -102,7 +107,8 @@ void Manager::RUN(const char* filepath)
      //ferr.open(ERROR_LOG_PATH); //에러코드 파일 열라고?
     fin.open(filepath);
     char cmd[50] = "";
-     Loaded_LIST *list=new Loaded_LIST;
+    Loaded_LIST *list=new Loaded_LIST;
+    Tree_manager* tree=new Tree_manager;
     while (!fin.eof()) {
         fin.getline(cmd, 50);
         char* command = strtok(cmd, " ");
@@ -124,18 +130,31 @@ void Manager::RUN(const char* filepath)
             if (!ADD(cmd,dir, file_name, add_path,list)) {
                 PrintError(Add);
             }
+            else{
+                PrintSuc(Add);
+            }
         }
         else if (strcmp(command,"MODIFY")==0){
-            cout<<"모디파이왔디"<<endl;
             command=strtok(NULL," ");
             string file_name1 = command;
             command = strtok(NULL,"\"");
             string change_name = command;
             command = strtok(NULL,"\n"); // eeeeeeeeeeeeeeeroooooooooooooorrrrrrrrrrr주의 " 500"일케읽힘
             string change_num = command;
-
-            if(!MODIFY(cmd, file_name1, change_name, change_num, list)){
+            int int_NUMBER = atoi(change_num.c_str());
+            if(!MODIFY(cmd, file_name1, change_name, int_NUMBER, list)){
                 PrintError(Modify);
+            }
+            else{
+                PrintSuc(Modify);
+            }
+        }
+        else if(strcmp(command,"MOVE")==0){
+            if(!MOVE(cmd, list, tree)){
+                PrintError(Move);
+            }
+            else{
+                PrintSuc(Move);
             }
         }
 
@@ -157,10 +176,16 @@ Result Manager::LOAD(const char* filepath,Loaded_LIST* list) { //Loaded List cla
     } 
     while (!fread.eof()) {
         getline(fread, str_NUMBER, ',');
+        int int_NUMBER=atoi(str_NUMBER.c_str());
         getline(fread, NAME, '.');
         getline(fread,trash1,'\n');
+        if(node_num > 100){
+            list->delete_head();
+            node_num--;
+        }
         //int i = stoi(str_NUMBER); //string=>t
-        list->Load_linklist(NAME, "img_files", str_NUMBER); //안에 전달할 넣어주기 dir이름 변경해야해ㅠ    
+        list->Load_linklist(NAME, "img_files", int_NUMBER); //안에 전달할 넣어주기 dir이름 변경해야해ㅠ    
+        node_num++;
     }
     list->Load_list_print(); //링크드리스트 만든 후 출력
     fread.close();
@@ -182,21 +207,88 @@ Result Manager::ADD(const char* filepath,string dir_n, string csv_n, string path
 
      while (!fin2.eof()) {
         getline(fin2, str_NUMBER, ',');
+        int int_NUMBER=atoi(str_NUMBER.c_str());
         getline(fin2, NAME, '.');
         getline(fin2,trash1,'\n');
-        list->Add_linklist(NAME, dir_n , str_NUMBER); //안에 전달할 넣어주기 dir이름 변경해야해ㅠ    
+        if(node_num > 100){
+            list->delete_head();
+            node_num--;
+        }
+        list->Add_linklist(NAME, dir_n , int_NUMBER); //안에 전달할 넣어주기 dir이름 변경해야해ㅠ  
+        node_num++;  
     }
-    
     list->Add_list_print(); //링크드리스트 만든 후 출력
     fin2.close();
     return Success;
 }
-Result Manager::MODIFY(const char* filepath,string dir_n, string n_imgname, string n_num, Loaded_LIST* list){
+Result Manager::MODIFY(const char* filepath,string dir_n, string n_imgname, int n_num, Loaded_LIST* list){
     if(!list->Modify_list(n_imgname, dir_n, n_num)){
         return Fail;
     }
     list->test_All_print();
     return Success;
+}
+Result Manager::MOVE(const char* filepath, Loaded_LIST* list, Tree_manager* tree){
+    //[1]마지막 노드를 가져올것
+    while(list->find_bst_root()!=NULL){
+    if(bst_node_num>300){
+        tree->delete_small();
+        bst_node_num--;
+    }
+    tree->make_bst(list->find_bst_root());
+    bst_node_num++;
+    list->delete_tail();
+    }
+    node_num=0;
+    tree->test_print_bst();
+    return Success;
+}
+void Tree_manager::make_bst(Loaded_LIST_Node* bring_node){
+    BST_Node* newnode = new BST_Node;
+    BST_Node* currnode;
+    newnode->bst_dir = bring_node->dirname;
+    newnode->bst_name= bring_node->img_name;
+    newnode->bst_num= bring_node->unique_num;
+    if(bst_root==NULL){
+        bst_root = newnode;
+        return;
+    }
+    currnode=bst_root;
+    while(currnode!=NULL){
+        if(currnode->bst_num > newnode->bst_num){
+            if(currnode->left ==NULL){
+                currnode->left=newnode;
+                return;
+            }
+            currnode=currnode->left;
+        }
+        if(currnode->bst_num < newnode->bst_num){
+            if(currnode->right == NULL){
+                currnode->right = newnode;
+                return;
+            }
+            currnode=currnode->right;
+        } //엘스이프로 가틍ㄴ게 나오면 오류해줘야해
+        
+    }
+    
+
+}
+void Loaded_LIST::delete_head(){
+    Loaded_LIST_Node* currnode = img_head;
+    Loaded_LIST_Node* prevnode = img_head;
+    //[1]그 리스트에서 마지막 노드일 경우=>dir노드까지 없애준다
+    //[2]아닌경우로
+    currnode=currnode->next;
+    if(currnode->next == NULL){
+        delete currnode;
+        img_head = prevnode->down;
+        delete prevnode;
+        return;
+    }
+    prevnode->next=currnode->next;
+    delete currnode;
+    return;
 }
 void Loaded_LIST::test_All_print(){
     Loaded_LIST_Node* currnode = img_head;
@@ -214,7 +306,7 @@ void Loaded_LIST::test_All_print(){
     }
     return;
 }
-int Loaded_LIST::Modify_list(string name, string dir, string new_num){
+int Loaded_LIST::Modify_list(string name, string dir, int new_num){
     Loaded_LIST_Node* currnode;
     Loaded_LIST_Node* prevnode;
     currnode = img_head;
@@ -228,8 +320,8 @@ int Loaded_LIST::Modify_list(string name, string dir, string new_num){
     prevnode= currnode;
 
     while(1){
-        if(currnode->img_name == name) break;
-        if(currnode->next ==NULL){return 0;}
+        if(currnode->img_name == name) break; //숫자바꿀노드찾았다
+        if(currnode->next ==NULL){return 0;} //끝까지왔는데 찾는게 없어 ㅠㅠ=>오류!
         prevnode=currnode;
         currnode=currnode->next;
     }
@@ -239,14 +331,92 @@ int Loaded_LIST::Modify_list(string name, string dir, string new_num){
     newnode->img_name = name;
     if(currnode->next==NULL){ //성공 리턴
         prevnode->next=newnode;
+        newnode->back=prevnode;
         delete currnode;
         return 1;
     }
     if(currnode->next!=NULL){ //성공리턴
         prevnode->next=newnode;
         newnode->next=currnode->next;
+        currnode->next->back=newnode;
+        newnode->back=prevnode;
         delete currnode;
         return 1;
+    }
+    return 0;
+}
+Loaded_LIST_Node* Loaded_LIST::find_bst_root(){
+    if(img_head==NULL){return NULL;}
+    Loaded_LIST_Node*currnode = img_head;
+    while(currnode->down != NULL){ //맨밑 디렉토리 노드까지 온다
+        currnode=currnode->down;
+    }
+    while(currnode->next != NULL){//그 줄에서 제일 끝까지 간다.
+        currnode= currnode->next;
+    }
+    return currnode;
+}
+void Loaded_LIST::delete_tail(){
+    Loaded_LIST_Node*currnode = img_head;
+    Loaded_LIST_Node*prevnode = img_head;
+    Loaded_LIST_Node*tmp=img_head;
+    int how_count=0;
+    int how_count_dir=0;
+    while(currnode->down != NULL){ //맨밑 디렉토리 노드까지 온다
+        currnode=currnode->down;
+        how_count_dir++;
+    }
+    while(currnode->next != NULL){//그 줄에서 제일 끝까지 간다.
+        prevnode=currnode;
+        currnode= currnode->next;
+        how_count++;
+    }
+    delete currnode; 
+    prevnode->next=NULL;
+    if(how_count_dir!=0 &&how_count==1){
+        tmp=prevnode->up;
+        delete prevnode;
+        tmp->down = NULL;
+        return;
+    }
+    if(how_count_dir==0 && how_count==1){
+        delete prevnode;
+        img_head=NULL;
+        return;
+    }
+    return;
+}
+void Tree_manager::test_print_bst(){
+    BST_Node*currnode= bst_root;
+    while(currnode != NULL){
+        cout<<currnode->bst_num<<" "<<currnode->bst_name<<endl;
+        currnode=currnode->right;
+    }
+    return;
+}
+void Tree_manager::delete_small(){
+    BST_Node* currnode=bst_root;
+    BST_Node* prevnode=bst_root;
+    BST_Node* savenode=NULL; 
+    while(currnode->left != NULL){ //오직 찾는과정 반복탈출후delete할것
+        prevnode=currnode;
+        currnode=currnode->left;
+    }
+    if(currnode == bst_root){ //루트일 경우
+        savenode=currnode->right;
+        delete currnode;
+        bst_root=savenode;
+    }
+    else if(currnode->left == NULL && currnode->right ==NULL){ //자식X
+        delete currnode;
+        prevnode->left=NULL;
+    }
+    else if(currnode->left ==NULL && currnode->right != NULL){//오른쪽자식만O
+        prevnode->left=currnode->right;
+        delete currnode; //아,,이거 오류나는거아니냐////////////////////////////////////////
+    }
+    else if(currnode->left != NULL){ //왼쪽자식이 오ㅙ있니
+        cout<<"delete_small 함수에서 오류발생"<<endl;
     }
 }
 void Manager::PrintError(Result result) {  //------------Error_print----------
@@ -261,16 +431,29 @@ void Manager::PrintError(Result result) {  //------------Error_print----------
         break;
     case Result::Modify:
         cout << 300 << endl;
-
+        break;
+    case Result::Move:
+        cout<<400<<endl;
+        break;
 
     }
     cout << "==================================" << endl;
-    /*
-    if(result==Load) {
-        cout<<"=====Error===="<<endl;
-        cout<<Load<<endl;
-
+}
+void Manager::PrintSuc(Result result){ //ADD도 추가해줄것
+    cout<<"============";
+    switch(result){
+        case Result::Add:
+            cout<<"Add";
+            break;
+        case Result::Modify:
+            cout<<"Modfiy";
+            break;
+        case Result::Move:
+            cout<<"Move";
+            break;
     }
-    else if(result==Add) return 200;
-    else if(result==)*/
+    cout<<"============"<<endl;
+    cout<<"Success"<<endl;
+    cout<<"==============================="<<endl;
+    return;
 }

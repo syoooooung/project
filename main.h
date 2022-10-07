@@ -3,6 +3,8 @@
 #include <string>
 #include <cstring>
 #include <fstream>
+#include <stack>
+#include <queue>
 using namespace std;
 enum Result{
     Fail = 0,
@@ -65,6 +67,10 @@ public:
     void delete_small();
     void BST_Print(BST_Node* currnode);
     BST_Node* get_bst_root(){return bst_root;}
+    void postorder(BST_Node* root, string word);
+    int search(char *text, char *pat);
+    void preprocess_case2(int *shift, int *bpos, char *pat, int m);
+    void preprocess_case1(int *shift, int *bpos,char *pat, int m);
 };
 
 class Manager
@@ -86,6 +92,7 @@ private:
     Result MODIFY(const char* filepath,string dir_n, string n_imgname, int n_num, Loaded_LIST* list);
     Result MOVE(const char* filepath,Loaded_LIST*list, Tree_manager* tree);
     Result PRINT(Tree_manager* tree);
+    Result SEARCH(Tree_manager* tree, string word);
 };
 
 

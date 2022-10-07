@@ -1,6 +1,7 @@
 #include "main.h"
 int node_num=0;
 int bst_node_num=0;
+#define ALP_LEN 256
 
 int main(int argc, char* argv[])
 {
@@ -159,6 +160,10 @@ void Manager::RUN(const char* filepath)
         }
         else if(strcmp(command,"PRINT")==0){
             if(!PRINT(tree)) PrintError(Print);
+        }
+        else if(strcmp(command,"SEARCH")==0){
+            command=strtok(NULL,"\"");
+            if(!SEARCH(tree, command)) PrintError(Search);
         }
 
     }
@@ -434,6 +439,120 @@ void Tree_manager::BST_Print(BST_Node*currnode){
     cout<<currnode->bst_dir<<" / \""<<currnode->bst_name<<"\" / "<<currnode->bst_num<<endl;
     if(currnode->right!=NULL) BST_Print(currnode->right);
 }
+void Tree_manager::postorder(BST_Node* root, string word){
+    queue<BST_Node* > q;
+    if(root==NULL){
+        return;
+    }
+    stack<BST_Node*> s;
+    s.push(root);
+
+    stack<BST_Node* > out;
+    while(!s.empty()){
+        BST_Node* curr = s.top();
+        s.pop();
+
+        out.push(curr);
+        if(curr->left){
+            s.push(curr->left);
+        }
+        if(curr->right){
+            s.push(curr->right);
+        }
+    }
+    while(!out.empty()){
+        //cout<<out.top()->bst_name<<endl;
+        q.push(out.top());
+        out.pop();
+    }
+//Queue
+    cout<<"================SEARCH=============="<<endl;
+    while(!q.empty()){
+        //cout<<"들어왔니"<<q.front()->bst_name<<endl;
+        const char* tmp = q.front()->bst_name.c_str();
+        const char* tmp3=word.c_str();
+        char* tmp1 = (char *)tmp;
+        char* tmp2 = (char *)tmp3;
+        if(search(tmp1, tmp2)==1){
+            cout<<"\""<<q.front()->bst_name<<"\" / "<<q.front()->bst_num<<endl;
+        }
+        q.pop();
+    }
+    cout<<"===================================="<<endl;
+
+}
+Result Manager::SEARCH(Tree_manager* tree, string word){
+    if(tree->get_bst_root()==NULL){return Fail;}
+    tree->postorder(tree->get_bst_root(),word);
+    return Success;
+}
+void Tree_manager::preprocess_case1(int *shift, int *bpos, char *pat, int m)
+{
+    int i = m, j = m+1;
+    bpos[i] = j;
+    while(i > 0)
+    {
+        while(j <= m && pat[i-1] != pat[j-1])
+        {
+            if (shift[j] == 0)
+                shift[j] = j-i;
+            j = bpos[j];
+        }
+        i--; j--;
+        bpos[i] = j; 
+    }
+}
+void Tree_manager::preprocess_case2(int *shift, int *bpos, char *pat, int m)
+{
+    int i, j;
+    j = bpos[0];
+    for(i=0; i<=m; i++)
+    {
+        if(shift[i]==0)
+            shift[i] = j;
+  
+        if (i==j)
+            j = bpos[j];
+    }
+}
+int Tree_manager::search(char *text, char *pat)
+{
+    int m = strlen(pat);
+    int n = strlen(text);
+    int s=0; // 텍스트에 대한 패턴을 이동시키기 위한 변수
+  
+    int bpos[m+1], shift[m+1];
+  
+    
+    for(int i=0;i<m+1;i++) shift[i]=0;
+  
+    //전처리 단계
+    preprocess_case1(shift, bpos, pat, m);
+    preprocess_case2(shift, bpos, pat, m);
+  
+    // 문자열 검색 단계
+    while(s <= n-m)
+    {
+  
+        int j = m-1;
+  
+        // 텍스트와 패턴을 오니쪽에서 오른쪽으로 비교
+        while(j >= 0 && pat[j] == text[s+j])
+            j--;
+  
+         // 텍스트에서 패턴을 발견한 경우
+        if (j<0) {
+            // 패턴을 다음 위치로 이동시킴
+            return 1;
+            s += shift[0];
+        }
+        else {
+            // 패턴과 불일치하는 경우 오프셋만큼 패턴을 이동
+            s += shift[j+1];
+        }
+    }
+  return 0;
+}
 void Manager::PrintError(Result result) {  //------------Error_print----------
     cout << "===============Error=============" << endl;
     switch (result)
@@ -450,12 +569,14 @@ void Manager::PrintError(Result result) {  //------------Error_print----------
     case Result::Move:
         cout<<400<<endl;
         break;
-
+    case Result::Search:
+        cout<<600<<endl;
+        break;
     }
     cout << "==================================" << endl;
 }
 void Manager::PrintSuc(Result result){ //ADD도 추가해줄것
-    cout<<"============";
+    cout<<"=============";
     switch(result){
         case Result::Add:
             cout<<"Add";
@@ -467,7 +588,7 @@ void Manager::PrintSuc(Result result){ //ADD도 추가해줄것
             cout<<"Move";
             break;
     }
-    cout<<"============"<<endl;
+    cout<<"============="<<endl;
     cout<<"Success"<<endl;
     cout<<"==============================="<<endl;
     return;

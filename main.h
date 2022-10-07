@@ -38,6 +38,8 @@ public:
     void Add_linklist(string name, string dir, string num);
     void Load_list_print();
     void Add_list_print();
+    int Modify_list(string name, string dir, string new_num);
+    void test_All_print(); //t삭제해줄것
 };
 
 class Manager
@@ -56,6 +58,7 @@ public:
 private:
     Result LOAD(const char* filepath,Loaded_LIST* list);
     Result ADD(const char* filepath,string dir_n, string csv_n, string path,Loaded_LIST* list);
+    Result MODIFY(const char* filepath,string dir_n, string n_imgname, string n_num, Loaded_LIST* list);
 };
 
 

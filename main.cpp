@@ -66,6 +66,7 @@ void Loaded_LIST::Load_linklist(string name, string dir, string num) {
     while (CurrNode->next != NULL) {
         CurrNode = CurrNode->next;
     }
+
     CurrNode->next = newNode;
     return;
 }
@@ -124,6 +125,19 @@ void Manager::RUN(const char* filepath)
                 PrintError(Add);
             }
         }
+        else if (strcmp(command,"MODIFY")==0){
+            cout<<"모디파이왔디"<<endl;
+            command=strtok(NULL," ");
+            string file_name1 = command;
+            command = strtok(NULL,"\"");
+            string change_name = command;
+            command = strtok(NULL,"\n"); // eeeeeeeeeeeeeeeroooooooooooooorrrrrrrrrrr주의 " 500"일케읽힘
+            string change_num = command;
+
+            if(!MODIFY(cmd, file_name1, change_name, change_num, list)){
+                PrintError(Modify);
+            }
+        }
 
     }
     // TODO: implement
@@ -140,7 +154,7 @@ Result Manager::LOAD(const char* filepath,Loaded_LIST* list) { //Loaded List cla
         cout << "해당 경로에 파일이 없음"<<endl;
         //PrintError(Load);
         return Fail;
-    }
+    } 
     while (!fread.eof()) {
         getline(fread, str_NUMBER, ',');
         getline(fread, NAME, '.');
@@ -170,35 +184,71 @@ Result Manager::ADD(const char* filepath,string dir_n, string csv_n, string path
         getline(fin2, str_NUMBER, ',');
         getline(fin2, NAME, '.');
         getline(fin2,trash1,'\n');
-        cout<< str_NUMBER << "  " <<NAME <<endl;//삭제할것
         list->Add_linklist(NAME, dir_n , str_NUMBER); //안에 전달할 넣어주기 dir이름 변경해야해ㅠ    
     }
     
     list->Add_list_print(); //링크드리스트 만든 후 출력
     fin2.close();
-    /*
-    string dir_foradd;
-    Loaded_LIST_Node* currNode = new Loaded_LIST_Node;
-    Loaded_LIST_Node* newNode = new Loaded_LIST_Node;
-    currNode=img_head;
-
-    //char* csv_path = strcat(plus, path); //csv경로
-    while(currNode->down!=NULL)
-    {
-        if(currNode->dirname==path1){
-            while(currNode->next != NULL){
-                currNode=currNode->next;
-            }
-            currNode->next=newNode;
-        }
-        else if()
-        currNode=currNode->down;
-    }
-    */
     return Success;
 }
+Result Manager::MODIFY(const char* filepath,string dir_n, string n_imgname, string n_num, Loaded_LIST* list){
+    if(!list->Modify_list(n_imgname, dir_n, n_num)){
+        return Fail;
+    }
+    list->test_All_print();
+    return Success;
+}
+void Loaded_LIST::test_All_print(){
+    Loaded_LIST_Node* currnode = img_head;
+    Loaded_LIST_Node* dirnode= img_head;
+    while(dirnode != NULL){
+        cout<<"==============="<<currnode->dirname<<"================"<<endl;
+        currnode=currnode->next;
+        while(currnode!=NULL){
+            cout<<currnode->img_name<<" / "<<currnode->unique_num<<endl;
+            currnode=currnode->next;
+        }
+        dirnode=dirnode->down;
+        currnode=dirnode;
+        cout<<"================================================="<<endl;
+    }
+    return;
+}
+int Loaded_LIST::Modify_list(string name, string dir, string new_num){
+    Loaded_LIST_Node* currnode;
+    Loaded_LIST_Node* prevnode;
+    currnode = img_head;
+    //먼저 디렉토리 찾기
+    while(1){
+        if(currnode->dirname==dir) break;//디랙토리 노드 찾아다
+        if(currnode->down==NULL){
+            return 0; //반환값 수정 오류코드 보내도록
+        }
+        currnode= currnode->down;}
+    prevnode= currnode;
 
-
+    while(1){
+        if(currnode->img_name == name) break;
+        if(currnode->next ==NULL){return 0;}
+        prevnode=currnode;
+        currnode=currnode->next;
+    }
+    Loaded_LIST_Node* newnode = new Loaded_LIST_Node;
+    newnode->dirname=dir;
+    newnode->unique_num = new_num;
+    newnode->img_name = name;
+    if(currnode->next==NULL){ //성공 리턴
+        prevnode->next=newnode;
+        delete currnode;
+        return 1;
+    }
+    if(currnode->next!=NULL){ //성공리턴
+        prevnode->next=newnode;
+        newnode->next=currnode->next;
+        delete currnode;
+        return 1;
+    }
+}
 void Manager::PrintError(Result result) {  //------------Error_print----------
     cout << "===============Error=============" << endl;
     switch (result)

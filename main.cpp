@@ -157,6 +157,9 @@ void Manager::RUN(const char* filepath)
                 PrintSuc(Move);
             }
         }
+        else if(strcmp(command,"PRINT")==0){
+            if(!PRINT(tree)) PrintError(Print);
+        }
 
     }
     // TODO: implement
@@ -219,6 +222,13 @@ Result Manager::ADD(const char* filepath,string dir_n, string csv_n, string path
     }
     list->Add_list_print(); //링크드리스트 만든 후 출력
     fin2.close();
+    return Success;
+}
+Result Manager::PRINT(Tree_manager* tree){
+    if(tree->get_bst_root()==NULL){
+        return Fail;
+    }
+    else{tree->BST_Print(tree->get_bst_root()); }
     return Success;
 }
 Result Manager::MODIFY(const char* filepath,string dir_n, string n_imgname, int n_num, Loaded_LIST* list){
@@ -364,7 +374,7 @@ void Loaded_LIST::delete_tail(){
     int how_count_dir=0;
     while(currnode->down != NULL){ //맨밑 디렉토리 노드까지 온다
         currnode=currnode->down;
-        how_count_dir++;
+        how_count_dir++;;
     }
     while(currnode->next != NULL){//그 줄에서 제일 끝까지 간다.
         prevnode=currnode;
@@ -418,6 +428,11 @@ void Tree_manager::delete_small(){
     else if(currnode->left != NULL){ //왼쪽자식이 오ㅙ있니
         cout<<"delete_small 함수에서 오류발생"<<endl;
     }
+}
+void Tree_manager::BST_Print(BST_Node*currnode){
+    if(currnode->left!=NULL) BST_Print(currnode->left);
+    cout<<currnode->bst_dir<<" / \""<<currnode->bst_name<<"\" / "<<currnode->bst_num<<endl;
+    if(currnode->right!=NULL) BST_Print(currnode->right);
 }
 void Manager::PrintError(Result result) {  //------------Error_print----------
     cout << "===============Error=============" << endl;

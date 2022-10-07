@@ -63,6 +63,8 @@ public:
     void make_bst(Loaded_LIST_Node* bring_node);
     void test_print_bst(); //삭제할것
     void delete_small();
+    void BST_Print(BST_Node* currnode);
+    BST_Node* get_bst_root(){return bst_root;}
 };
 
 class Manager
@@ -77,11 +79,13 @@ public:
     void RUN(const char* filepath);
     void PrintError(Result result);
     void PrintSuc(Result result);
+
 private:
     Result LOAD(const char* filepath,Loaded_LIST* list);
     Result ADD(const char* filepath,string dir_n, string csv_n, string path,Loaded_LIST* list);
     Result MODIFY(const char* filepath,string dir_n, string n_imgname, int n_num, Loaded_LIST* list);
     Result MOVE(const char* filepath,Loaded_LIST*list, Tree_manager* tree);
+    Result PRINT(Tree_manager* tree);
 };
 
 

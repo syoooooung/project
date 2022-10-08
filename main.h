@@ -5,6 +5,9 @@
 #include <fstream>
 #include <stack>
 #include <queue>
+#include <cstdio>
+#include <cmath>
+
 using namespace std;
 enum Result{
     Fail = 0,
@@ -60,7 +63,9 @@ public:
 class Tree_manager{
 private:
     BST_Node* bst_root=NULL;
+    BST_Node* pre_cur=NULL;
     string im_path="";
+    string before_name="";
 public:
     Tree_manager(){}
     void make_bst(Loaded_LIST_Node* bring_node);
@@ -68,12 +73,17 @@ public:
     void delete_small();
     void BST_Print(BST_Node* currnode);
     BST_Node* get_bst_root(){return bst_root;}
-    BST_Node* get_find_node(int findnum,BST_Node* root);
+    void get_find_node(int findnum,BST_Node* root);
     void postorder(BST_Node* root, string word);
     int search(char *text, char *pat);
     void process_2(int *shift, int *bpos, char *pat, int m);
     void process_1(int *shift, int *bpos,char *pat, int m);
-    void get_put_path(string path){im_path = path;}
+    void put_path(string path){im_path = path;}
+    void put_name(string name){before_name = name;}
+    string get_path(){return im_path;}
+    string get_name(){return before_name;}
+    void put_node(BST_Node* sav){pre_cur=sav;}
+    BST_Node* get_node(){return pre_cur;}
     
 };
 
@@ -81,7 +91,7 @@ class Manager
 {
 private:
     std::ifstream fin;
-    std::ifstream fread;
+    std::ifstream fread2;
     std::ifstream fin2;
 public:
     Manager() {};
@@ -98,6 +108,7 @@ private:
     Result PRINT(Tree_manager* tree);
     Result SEARCH(Tree_manager* tree, string word);
     Result SELECT(Tree_manager* tree, int finde_num);
+    Result EDIT(Tree_manager* tree,string cmd);
 };
 
 

@@ -172,6 +172,11 @@ void Manager::RUN(const char* filepath)
             if(!SELECT(tree, findnum)) PrintError(Select);
             else{ PrintSuc(Select);}
         }
+        else if(strcmp(command,"EDIT")==0){
+            command=strtok(NULL,"\n");
+            string edit_cmd = command;
+            if(!EDIT(tree,edit_cmd)){}
+        }
 
     }
     // TODO: implement
@@ -183,17 +188,17 @@ Result Manager::LOAD(const char* filepath,Loaded_LIST* list) { //Loaded List cla
     string trash1;
     int count = 0;
     //file.open("E:\\filesnumbers.csv", ios::in); //ios::in=>파일을 읽겠다는 뜻
-    fread.open("./img_files/filesnumbers.csv", ios::in);
-    if (fread.fail()) {
+    fread2.open("./img_files/filesnumbers.csv", ios::in);
+    if (fread2.fail()) {
         cout << "해당 경로에 파일이 없음"<<endl;
         //PrintError(Load);
         return Fail;
     } 
-    while (!fread.eof()) {
-        getline(fread, str_NUMBER, ',');
+    while (!fread2.eof()) {
+        getline(fread2, str_NUMBER, ',');
         int int_NUMBER=atoi(str_NUMBER.c_str());
-        getline(fread, NAME, '.');
-        getline(fread,trash1,'\n');
+        getline(fread2, NAME, '.');
+        getline(fread2,trash1,'\n');
         if(node_num > 100){
             list->delete_head();
             node_num--;
@@ -203,7 +208,7 @@ Result Manager::LOAD(const char* filepath,Loaded_LIST* list) { //Loaded List cla
         node_num++;
     }
     list->Load_list_print(); //링크드리스트 만든 후 출력
-    fread.close();
+    fread2.close();
     count++; //이거!!!!!!!!!!!!!!!!!!!!!!!!!!!111수정 !!!!!!!!!!!11count++에드에서할것
     return Success;
 }
@@ -267,14 +272,99 @@ Result Manager::MOVE(const char* filepath, Loaded_LIST* list, Tree_manager* tree
 }
 Result Manager::SELECT(Tree_manager* tree, int find_num){
     BST_Node*findnode;
-    findnode= tree->get_find_node(find_num, tree->get_bst_root());
+    tree->get_find_node(find_num, tree->get_bst_root());
+    findnode=tree->get_node();
     if(findnode==NULL){return Fail;}
     string path_dir = findnode->bst_dir;
     string path_name = findnode->bst_name;
-    string to_path = "./"+path_dir+"/"+path_name+".raw";
-    tree->get_put_path(to_path);
+    string to_path = "./"+path_dir+"/"+path_name+".RAW";
+    tree->put_name(path_name);
+    tree->put_path(to_path);
     return Success;
+}
+Result Manager::EDIT(Tree_manager* tree, string cmd){
+    string img_path = tree->get_path();
+    string pre_name = tree->get_name();
+    const char* fin_path = img_path.c_str();
+    int width = 256, height =256;
 
+    FILE* input_file, *output_file;
+    stack<int> s;
+    queue<int> q;
+    unsigned char input_data[256][256];
+
+    input_file = fopen(fin_path,"rb");
+    if(input_file ==NULL){
+        cout<<"file not found"<<endl;
+        return Fail;
+    }
+    fread(input_data, sizeof(unsigned char), width* height, input_file);
+    //점대칭
+    int i,j=0;
+    const char* tmp=cmd.c_str();
+    char*tmp1 =(char *)tmp;
+    string new_cmd = strtok(tmp1," ");
+
+    if(new_cmd=="-f"){
+        unsigned char output_data[256][256];
+        for(i=0; i<height; i++){
+            for(j=0;j<width;j++){
+                s.push(input_data[i][j]);
+            }
+        }
+        for(i=0; i<height ; i++){
+            for(j=0;j<width;j++){
+                output_data[i][j]=s.top();
+                s.pop();
+            }
+        }
+    string change_path ="./"+pre_name+"_flipped.RAW";
+    const char* change_path1=change_path.c_str();
+    output_file = fopen(change_path1 , "wb");
+    fwrite(output_data, sizeof(unsigned char), width*height, output_file);
+    }
+    
+    else if(new_cmd=="-l"){
+        unsigned char output_data[256][256];
+        string str_num=strtok(NULL,"\n");
+        int lig_num=atoi(str_num.c_str());
+    //밝기조정
+        for(i=0;i<height;i++){
+            for(j=0;j<width;j++){
+                q.push(input_data[i][j]);
+            }
+        }
+        for(i=0;i<height;i++){
+            for(j=0;j<width;j++){
+                if(q.front()+lig_num<=255){
+                    output_data[i][j]=q.front();}
+                else{
+                    output_data[i][j]=255;
+                }
+                q.pop();
+            }
+        }
+        string change_path ="./"+pre_name+"_adjusted.RAW";
+        const char* change_path1=change_path.c_str();
+        output_file = fopen(change_path1 , "wb");
+        fwrite(output_data, sizeof(unsigned char), width*height, output_file);
+    }
+    else{
+        double tmp_num=0;
+        unsigned char output_data[128][128];
+        for(i=0;i<128;i++){
+            for(j=0;j<128;j++){
+                tmp_num = (input_data[2*i][2*j] + input_data[2*i][2*j+1]+input_data[2*i+1][2*j]+input_data[2*i+1][2*j+1])/4;
+                output_data[i][j] = round(tmp_num);
+            }
+        }
+        string change_path ="./"+pre_name+"_resized.RAW";
+        const char* change_path1=change_path.c_str();
+        output_file = fopen(change_path1 , "wb");
+        fwrite(output_data, sizeof(unsigned char), 128*128, output_file);
+    }
+    fclose(input_file);
+    fclose(output_file);
 }
 void Tree_manager::make_bst(Loaded_LIST_Node* bring_node){
     BST_Node* newnode = new BST_Node;
@@ -571,13 +661,13 @@ int Tree_manager::search(char *text, char *pat)
     }
   return 0;
 }
-BST_Node* Tree_manager::get_find_node(int findnum, BST_Node* currnode){
-        if(currnode->bst_num == findnum){
-            return currnode;
-        }
-        if(currnode->left!=NULL) get_find_node(findnum,currnode->left);
-        if(currnode->right!=NULL) get_find_node(findnum,currnode->right);
-        if(currnode->left==NULL && currnode->right == NULL) {return NULL;}
+void Tree_manager::get_find_node(int findnum, BST_Node* currnode){
+    if(currnode != NULL){
+        if(currnode->bst_num==findnum){
+            put_node(currnode); return;}
+        if(currnode->left!=NULL)get_find_node(findnum,currnode->left);
+        if(currnode->right!=NULL)get_find_node(findnum,currnode->right);
+    }     
 }
 void Manager::PrintError(Result result) {  //------------Error_print----------
     cout << "===============Error=============" << endl;

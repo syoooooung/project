@@ -9,6 +9,9 @@
 #include <cmath>
 
 using namespace std;
+
+std::ofstream flog;
+
 enum Result{
     Fail = 0,
     Success=1,
@@ -33,10 +36,10 @@ public:
     string dirname="";
     int unique_num;
 };
-class BST_Node{
+class Database_BST_Node{
 public:
-    BST_Node*right=NULL;
-    BST_Node*left=NULL;
+    Database_BST_Node*right=NULL;
+    Database_BST_Node*left=NULL;
     string bst_name="";
     string bst_dir="";
     int bst_num;
@@ -53,30 +56,27 @@ public:
     void Load_linklist(string name, string dir, int num);
     void Add_linklist(string name, string dir, int num);
     void Load_list_print();
-    void Add_list_print();
     void delete_head();
     void delete_tail();
     int Modify_list(string name, string dir, int new_num);
-    void test_All_print(); //t삭제해줄것
     Loaded_LIST_Node* find_bst_root();
     Loaded_LIST_Node* get_head(){return img_head;}
 };
 
-class Tree_manager{
+class Database_BST{
 private:
-    BST_Node* bst_root=NULL;
-    BST_Node* pre_cur=NULL;
+    Database_BST_Node* bst_root=NULL;
+    Database_BST_Node* pre_cur=NULL;
     string im_path="";
     string before_name="";
 public:
-    Tree_manager(){}
+    Database_BST(){}
     void make_bst(Loaded_LIST_Node* bring_node);
-    void test_print_bst(); //삭제할것
     void delete_small();
-    void BST_Print(BST_Node* currnode);
-    BST_Node* get_bst_root(){return bst_root;}
-    void get_find_node(int findnum,BST_Node* root);
-    void postorder(BST_Node* root, string word);
+    void BST_Print(Database_BST_Node* currnode);
+    Database_BST_Node* get_bst_root(){return bst_root;}
+    void get_find_node(int findnum,Database_BST_Node* root);
+    void postorder(Database_BST_Node* root, string word);
     int search(char *text, char *pat);
     void process_2(int *shift, int *bpos, char *pat, int m);
     void process_1(int *shift, int *bpos,char *pat, int m);
@@ -84,9 +84,8 @@ public:
     void put_name(string name){before_name = name;}
     string get_path(){return im_path;}
     string get_name(){return before_name;}
-    void put_node(BST_Node* sav){pre_cur=sav;}
-    BST_Node* get_node(){return pre_cur;}
-    
+    void put_node(Database_BST_Node* sav){pre_cur=sav;}
+    Database_BST_Node* get_node(){return pre_cur;}
 };
 
 class Manager
@@ -106,12 +105,12 @@ private:
     Result LOAD(const char* filepath,Loaded_LIST* list);
     Result ADD(const char* filepath,string dir_n, string csv_n, string path,Loaded_LIST* list);
     Result MODIFY(const char* filepath,string dir_n, string n_imgname, int n_num, Loaded_LIST* list);
-    Result MOVE(const char* filepath,Loaded_LIST*list, Tree_manager* tree);
-    Result PRINT(Tree_manager* tree);
-    Result SEARCH(Tree_manager* tree, string word);
-    Result SELECT(Tree_manager* tree, int finde_num);
-    Result EDIT(Tree_manager* tree,string cmd);
-    void EXIT(Tree_manager* tree, Loaded_LIST* list);
+    Result MOVE(const char* filepath,Loaded_LIST*list, Database_BST* tree);
+    Result PRINT(Database_BST* tree);
+    Result SEARCH(Database_BST* tree, string word);
+    Result SELECT(Database_BST* tree, int finde_num);
+    Result EDIT(Database_BST* tree,string cmd);
+    void EXIT(Database_BST* tree, Loaded_LIST* list);
 };
 
 

@@ -81,35 +81,26 @@ void Loaded_LIST::Load_list_print() {
     currnode = img_head->next;
 
     cout << "===============LOAD=============" << endl;
+    flog << "===============LOAD=============" << endl;
     while (currnode != NULL) {
         cout << currnode->img_name << "/" << currnode->unique_num << endl;
+        flog<< currnode->img_name << "/" << currnode->unique_num << endl;
         currnode = currnode->next;
     }
     cout << "==================================" << endl;
+    flog << "==================================" << endl;
     return;
 }
 
-void Loaded_LIST::Add_list_print(){
-    Loaded_LIST_Node* currnode;
-    currnode=img_head->down;
-    currnode=currnode->next;
-    cout<<"==============ADD================="<<endl;
-    cout<<"Success"<<endl;
-    while(currnode!=NULL){
-        cout<<currnode->img_name<<" / "<<currnode->unique_num<<endl;
-        currnode=currnode->next;
-    }
-    cout<<"=================================="<<endl;
-    return;
-}
 void Manager::RUN(const char* filepath)
 {
     // fout.open(RESULT_LOG_PATH); 
      //ferr.open(ERROR_LOG_PATH); //에러코드 파일 열라고?
     fin.open(filepath);
+    flog.open("log.txt",ios::app);
     char cmd[50] = "";
     Loaded_LIST *list=new Loaded_LIST;
-    Tree_manager* tree=new Tree_manager;
+    Database_BST* tree=new Database_BST;
     while (!fin.eof()) {
         fin.getline(cmd, 50);
         char* command = strtok(cmd, " ");
@@ -175,15 +166,25 @@ void Manager::RUN(const char* filepath)
         else if(strcmp(command,"EDIT")==0){
             command=strtok(NULL,"\n");
             string edit_cmd = command;
-            if(!EDIT(tree,edit_cmd)){}
+            if(!EDIT(tree,edit_cmd)){PrintError(Edit);}
+            else{ PrintSuc(Edit);}
         }
         else if(strcmp(command,"EXIT")==0){
             EXIT(tree, list);
             delete tree;
             delete list;
             PrintSuc(Exit);
+            flog.close();
             return;
-        }
+        }/*
+        else{
+            if(strcmp(command,"ADD")==0){PrintError(Add);}
+            else if(strcmp(command,"MODIFY")==0){PrintError(Modify);}
+            else if(strcmp(command,"SEARCH")==0){PrintError(Search);}
+            else if(strcmp(command,"SELECT")==0){PrintError(Select);}     
+            //else if(strcmp(command,"EDIT")==0){}//PrintError(Edit);}
+            else{}
+        }*/
 
     }
     // TODO: implement
@@ -224,7 +225,7 @@ Result Manager::ADD(const char* filepath,string dir_n, string csv_n, string path
     //Loaded_LIST list;
     string NAME, str_NUMBER, trash1;
     //cout<<path<<endl;//삭제해줄것
-    
+    if(dir_n == "" || csv_n == ""){ return Fail;}
     fin2.open(path,ios::in);
     if (!fin2) {
         cout << "해당 경로에 파일이 없음"<<endl;
@@ -244,26 +245,32 @@ Result Manager::ADD(const char* filepath,string dir_n, string csv_n, string path
         list->Add_linklist(NAME, dir_n , int_NUMBER); //안에 전달할 넣어주기 dir이름 변경해야해ㅠ  
         node_num++;  
     }
-    list->Add_list_print(); //링크드리스트 만든 후 출력
     fin2.close();
     return Success;
 }
-Result Manager::PRINT(Tree_manager* tree){
+Result Manager::PRINT(Database_BST* tree){
     if(tree->get_bst_root()==NULL){
         return Fail;
     }
-    else{tree->BST_Print(tree->get_bst_root()); }
+    else{
+        cout<<"===============PRINT==============="<<endl;
+        flog<<"===============PRINT==============="<<endl;
+        tree->BST_Print(tree->get_bst_root()); 
+        cout<<"==================================="<<endl;
+        flog<<"==================================="<<endl;
+        }
     return Success;
 }
 Result Manager::MODIFY(const char* filepath,string dir_n, string n_imgname, int n_num, Loaded_LIST* list){
+    //if(dir_n=="" || n_imgname==""){return Fail;}
     if(!list->Modify_list(n_imgname, dir_n, n_num)){
         return Fail;
     }
-    list->test_All_print();
     return Success;
 }
-Result Manager::MOVE(const char* filepath, Loaded_LIST* list, Tree_manager* tree){
+Result Manager::MOVE(const char* filepath, Loaded_LIST* list, Database_BST* tree){
     //[1]마지막 노드를 가져올것
+    if(list->get_head()==NULL){return Fail;}
     while(list->find_bst_root()!=NULL){
     if(bst_node_num>300){
         tree->delete_small();
@@ -274,11 +281,10 @@ Result Manager::MOVE(const char* filepath, Loaded_LIST* list, Tree_manager* tree
     list->delete_tail();
     }
     node_num=0;
-    tree->test_print_bst();
     return Success;
 }
-Result Manager::SELECT(Tree_manager* tree, int find_num){
-    BST_Node*findnode;
+Result Manager::SELECT(Database_BST* tree, int find_num){
+    Database_BST_Node*findnode;
     tree->get_find_node(find_num, tree->get_bst_root());
     findnode=tree->get_node();
     if(findnode==NULL){return Fail;}
@@ -289,7 +295,7 @@ Result Manager::SELECT(Tree_manager* tree, int find_num){
     tree->put_path(to_path);
     return Success;
 }
-Result Manager::EDIT(Tree_manager* tree, string cmd){
+Result Manager::EDIT(Database_BST* tree, string cmd){
     string img_path = tree->get_path();
     string pre_name = tree->get_name();
     const char* fin_path = img_path.c_str();
@@ -372,8 +378,9 @@ Result Manager::EDIT(Tree_manager* tree, string cmd){
     }
     fclose(input_file);
     fclose(output_file);
+    return Success;
 }
-void Manager::EXIT(Tree_manager* tree, Loaded_LIST* list){
+void Manager::EXIT(Database_BST* tree, Loaded_LIST* list){
     while(tree->get_bst_root() != NULL){
         tree->delete_small();
     }
@@ -382,9 +389,9 @@ void Manager::EXIT(Tree_manager* tree, Loaded_LIST* list){
     }
     return;
 }
-void Tree_manager::make_bst(Loaded_LIST_Node* bring_node){
-    BST_Node* newnode = new BST_Node;
-    BST_Node* currnode;
+void Database_BST::make_bst(Loaded_LIST_Node* bring_node){
+    Database_BST_Node* newnode = new Database_BST_Node;
+    Database_BST_Node* currnode;
     newnode->bst_dir = bring_node->dirname;
     newnode->bst_name= bring_node->img_name;
     newnode->bst_num= bring_node->unique_num;
@@ -429,26 +436,25 @@ void Loaded_LIST::delete_head(){
     delete currnode;
     return;
 }
-void Loaded_LIST::test_All_print(){
-    Loaded_LIST_Node* currnode = img_head;
-    Loaded_LIST_Node* dirnode= img_head;
-    while(dirnode != NULL){
-        cout<<"==============="<<currnode->dirname<<"================"<<endl;
-        currnode=currnode->next;
-        while(currnode!=NULL){
-            cout<<currnode->img_name<<" / "<<currnode->unique_num<<endl;
-            currnode=currnode->next;
-        }
-        dirnode=dirnode->down;
-        currnode=dirnode;
-        cout<<"================================================="<<endl;
-    }
-    return;
-}
 int Loaded_LIST::Modify_list(string name, string dir, int new_num){
     Loaded_LIST_Node* currnode;
     Loaded_LIST_Node* prevnode;
     currnode = img_head;
+    prevnode= img_head;
+    //중복 숫자존재하는지 찾기
+    
+    while(1){
+        while(currnode->next!=NULL){
+            currnode=currnode->next;
+            if(currnode->unique_num==new_num){return 0;}
+        }
+        if(prevnode->down == NULL){break;}
+        prevnode=prevnode->down;
+        currnode=prevnode;
+    }
+    currnode = img_head;
+    prevnode= img_head;
+    
     //먼저 디렉토리 찾기
     while(1){
         if(currnode->dirname==dir) break;//디랙토리 노드 찾아다
@@ -525,18 +531,11 @@ void Loaded_LIST::delete_tail(){
     }
     return;
 }
-void Tree_manager::test_print_bst(){
-    BST_Node*currnode= bst_root;
-    while(currnode != NULL){
-        cout<<currnode->bst_num<<" "<<currnode->bst_name<<endl;
-        currnode=currnode->right;
-    }
-    return;
-}
-void Tree_manager::delete_small(){
-    BST_Node* currnode=bst_root;
-    BST_Node* prevnode=bst_root;
-    BST_Node* savenode=NULL; 
+
+void Database_BST::delete_small(){
+    Database_BST_Node* currnode=bst_root;
+    Database_BST_Node* prevnode=bst_root;
+    Database_BST_Node* savenode=NULL; 
     while(currnode->left != NULL){ //오직 찾는과정 반복탈출후delete할것
         prevnode=currnode;
         currnode=currnode->left;
@@ -558,22 +557,23 @@ void Tree_manager::delete_small(){
         cout<<"delete_small 함수에서 오류발생"<<endl;
     }
 }
-void Tree_manager::BST_Print(BST_Node*currnode){
+void Database_BST::BST_Print(Database_BST_Node*currnode){
     if(currnode->left!=NULL) BST_Print(currnode->left);
     cout<<currnode->bst_dir<<" / \""<<currnode->bst_name<<"\" / "<<currnode->bst_num<<endl;
+    flog<<currnode->bst_dir<<" / \""<<currnode->bst_name<<"\" / "<<currnode->bst_num<<endl;
     if(currnode->right!=NULL) BST_Print(currnode->right);
 }
-void Tree_manager::postorder(BST_Node* root, string word){
-    queue<BST_Node* > q;
+void Database_BST::postorder(Database_BST_Node* root, string word){
+    queue<Database_BST_Node* > q;
     if(root==NULL){
         return;
     }
-    stack<BST_Node*> s;
+    stack<Database_BST_Node*> s;
     s.push(root);
 
-    stack<BST_Node* > out;
+    stack<Database_BST_Node* > out;
     while(!s.empty()){
-        BST_Node* curr = s.top();
+        Database_BST_Node* curr = s.top();
         s.pop();
 
         out.push(curr);
@@ -591,6 +591,7 @@ void Tree_manager::postorder(BST_Node* root, string word){
     }
 //Queue
     cout<<"================SEARCH=============="<<endl;
+    flog<<"================SEARCH=============="<<endl;
     while(!q.empty()){
         //cout<<"들어왔니"<<q.front()->bst_name<<endl;
         const char* tmp = q.front()->bst_name.c_str();
@@ -599,18 +600,20 @@ void Tree_manager::postorder(BST_Node* root, string word){
         char* tmp2 = (char *)tmp3;
         if(search(tmp1, tmp2)==1){
             cout<<"\""<<q.front()->bst_name<<"\" / "<<q.front()->bst_num<<endl;
+            flog<<"\""<<q.front()->bst_name<<"\" / "<<q.front()->bst_num<<endl;
         }
         q.pop();
     }
     cout<<"===================================="<<endl;
+    flog<<"===================================="<<endl;
 
 }
-Result Manager::SEARCH(Tree_manager* tree, string word){
-    if(tree->get_bst_root()==NULL){return Fail;}
+Result Manager::SEARCH(Database_BST* tree, string word){
+    if(tree->get_bst_root()==NULL || word==""){return Fail;}
     tree->postorder(tree->get_bst_root(),word);
     return Success;
 }
-void Tree_manager::process_1(int *shift, int *bpos, char *pat, int m)
+void Database_BST::process_1(int *shift, int *bpos, char *pat, int m)
 {
     int i = m, j = m+1;
     bpos[i] = j;
@@ -626,7 +629,7 @@ void Tree_manager::process_1(int *shift, int *bpos, char *pat, int m)
         bpos[i] = j; 
     }
 }
-void Tree_manager::process_2(int *shift, int *bpos, char *pat, int m)
+void Database_BST::process_2(int *shift, int *bpos, char *pat, int m)
 {
     int i, j;
     j = bpos[0];
@@ -639,7 +642,7 @@ void Tree_manager::process_2(int *shift, int *bpos, char *pat, int m)
             j = bpos[j];
     }
 }
-int Tree_manager::search(char *text, char *pat)
+int Database_BST::search(char *text, char *pat)
 {
     int m = strlen(pat);
     int n = strlen(text);
@@ -677,7 +680,7 @@ int Tree_manager::search(char *text, char *pat)
     }
   return 0;
 }
-void Tree_manager::get_find_node(int findnum, BST_Node* currnode){
+void Database_BST::get_find_node(int findnum, Database_BST_Node* currnode){
     if(currnode != NULL){
         if(currnode->bst_num==findnum){
             put_node(currnode); return;}
@@ -686,48 +689,77 @@ void Tree_manager::get_find_node(int findnum, BST_Node* currnode){
     }     
 }
 void Manager::PrintError(Result result) {  //------------Error_print----------
-    cout << "===============Error=============" << endl;
+    cout << "===============ERROR=============" << endl;
+    flog << "===============ERROR=============" << endl;
     switch (result)
     {
     case Result::Load: //case Result::Load: 해야함?
         cout << 100 << endl;
+        flog << 100 << endl;
         break;
     case Result::Add:
         cout << 200 << endl;
+        flog << 200 << endl;
         break;
     case Result::Modify:
         cout << 300 << endl;
+        flog<< 300 <<endl;
         break;
     case Result::Move:
         cout<<400<<endl;
+        flog<<400<<endl;
         break;
     case Result::Search:
         cout<<600<<endl;
+        flog<<600<<endl;
         break;
+    case Result::Select:
+        cout<<700<<endl;
+        flog<<700<<endl;
+        break;
+    case Result::Edit:
+        cout<<800<<endl;
+        flog<<800<<endl;
+        break;
+
     }
     cout << "==================================" << endl;
+    flog << "==================================" << endl;
 }
 void Manager::PrintSuc(Result result){ //ADD도 추가해줄것
     cout<<"=============";
+    flog<<"=============";
     switch(result){
         case Result::Add:
-            cout<<"Add";
+            cout<<"ADD";
+            flog<<"ADD";
             break;
         case Result::Modify:
-            cout<<"Modfiy";
+            cout<<"MODIFY";
+            flog<<"MODIFY";
             break;
         case Result::Move:
-            cout<<"Move";
+            cout<<"MOVE";
+            flog<<"MOVE";
             break;
         case Result::Select:
-            cout<<"Select";
+            cout<<"SELECT";
+            flog<<"SELECT";
+            break;
+        case Result::Edit:
+            cout<<"EDIT";
+            flog<<"EDIT";
             break;
         case Result::Exit:
-            cout<<"Exit";
+            cout<<"EXIT";
+            flog<<"EXIT";
             break;
     }
     cout<<"============="<<endl;
-    cout<<"Success"<<endl;
+    flog<<"============="<<endl;
+    cout<<"SUCCESS"<<endl;
+    flog<<"SUCCESS"<<endl;
     cout<<"==============================="<<endl;
+    flog<<"==============================="<<endl;
     return;
 }

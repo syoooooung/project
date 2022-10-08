@@ -19,7 +19,8 @@ enum Result{
     Print=500,
     Search=600,
     Select=700,
-    Edit=800
+    Edit=800,
+    Exit=900
 
 };
 class Loaded_LIST_Node{   // -------------[Loaded_LIST_Node]-----------
@@ -58,6 +59,7 @@ public:
     int Modify_list(string name, string dir, int new_num);
     void test_All_print(); //t삭제해줄것
     Loaded_LIST_Node* find_bst_root();
+    Loaded_LIST_Node* get_head(){return img_head;}
 };
 
 class Tree_manager{
@@ -109,6 +111,7 @@ private:
     Result SEARCH(Tree_manager* tree, string word);
     Result SELECT(Tree_manager* tree, int finde_num);
     Result EDIT(Tree_manager* tree,string cmd);
+    void EXIT(Tree_manager* tree, Loaded_LIST* list);
 };
 
 

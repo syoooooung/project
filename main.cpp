@@ -177,6 +177,13 @@ void Manager::RUN(const char* filepath)
             string edit_cmd = command;
             if(!EDIT(tree,edit_cmd)){}
         }
+        else if(strcmp(command,"EXIT")==0){
+            EXIT(tree, list);
+            delete tree;
+            delete list;
+            PrintSuc(Exit);
+            return;
+        }
 
     }
     // TODO: implement
@@ -365,6 +372,15 @@ Result Manager::EDIT(Tree_manager* tree, string cmd){
     }
     fclose(input_file);
     fclose(output_file);
+}
+void Manager::EXIT(Tree_manager* tree, Loaded_LIST* list){
+    while(tree->get_bst_root() != NULL){
+        tree->delete_small();
+    }
+    while(list->get_head() != NULL){
+        list->delete_tail();
+    }
+    return;
 }
 void Tree_manager::make_bst(Loaded_LIST_Node* bring_node){
     BST_Node* newnode = new BST_Node;
@@ -705,6 +721,9 @@ void Manager::PrintSuc(Result result){ //ADD도 추가해줄것
             break;
         case Result::Select:
             cout<<"Select";
+            break;
+        case Result::Exit:
+            cout<<"Exit";
             break;
     }
     cout<<"============="<<endl;

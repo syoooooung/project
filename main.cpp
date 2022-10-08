@@ -165,6 +165,13 @@ void Manager::RUN(const char* filepath)
             command=strtok(NULL,"\"");
             if(!SEARCH(tree, command)) PrintError(Search);
         }
+        else if(strcmp(command, "SELECT")==0){
+            command=strtok(NULL,"\n");
+            string str = command;
+            int findnum = atoi(str.c_str());
+            if(!SELECT(tree, findnum)) PrintError(Select);
+            else{ PrintSuc(Select);}
+        }
 
     }
     // TODO: implement
@@ -204,7 +211,7 @@ Result Manager::LOAD(const char* filepath,Loaded_LIST* list) { //Loaded List cla
 Result Manager::ADD(const char* filepath,string dir_n, string csv_n, string path,Loaded_LIST* list) {//path1=>dirname, path2=>filename
     //Loaded_LIST list;
     string NAME, str_NUMBER, trash1;
-    cout<<path<<endl;//삭제해줄것
+    //cout<<path<<endl;//삭제해줄것
     
     fin2.open(path,ios::in);
     if (!fin2) {
@@ -257,6 +264,17 @@ Result Manager::MOVE(const char* filepath, Loaded_LIST* list, Tree_manager* tree
     node_num=0;
     tree->test_print_bst();
     return Success;
+}
+Result Manager::SELECT(Tree_manager* tree, int find_num){
+    BST_Node*findnode;
+    findnode= tree->get_find_node(find_num, tree->get_bst_root());
+    if(findnode==NULL){return Fail;}
+    string path_dir = findnode->bst_dir;
+    string path_name = findnode->bst_name;
+    string to_path = "./"+path_dir+"/"+path_name+".raw";
+    tree->get_put_path(to_path);
+    return Success;
+
 }
 void Tree_manager::make_bst(Loaded_LIST_Node* bring_node){
     BST_Node* newnode = new BST_Node;
@@ -486,7 +504,7 @@ Result Manager::SEARCH(Tree_manager* tree, string word){
     tree->postorder(tree->get_bst_root(),word);
     return Success;
 }
-void Tree_manager::preprocess_case1(int *shift, int *bpos, char *pat, int m)
+void Tree_manager::process_1(int *shift, int *bpos, char *pat, int m)
 {
     int i = m, j = m+1;
     bpos[i] = j;
@@ -502,7 +520,7 @@ void Tree_manager::preprocess_case1(int *shift, int *bpos, char *pat, int m)
         bpos[i] = j; 
     }
 }
-void Tree_manager::preprocess_case2(int *shift, int *bpos, char *pat, int m)
+void Tree_manager::process_2(int *shift, int *bpos, char *pat, int m)
 {
     int i, j;
     j = bpos[0];
@@ -527,8 +545,8 @@ int Tree_manager::search(char *text, char *pat)
     for(int i=0;i<m+1;i++) shift[i]=0;
   
     //전처리 단계
-    preprocess_case1(shift, bpos, pat, m);
-    preprocess_case2(shift, bpos, pat, m);
+    process_1(shift, bpos, pat, m);
+    process_2(shift, bpos, pat, m);
   
     // 문자열 검색 단계
     while(s <= n-m)
@@ -552,6 +570,14 @@ int Tree_manager::search(char *text, char *pat)
         }
     }
   return 0;
+}
+BST_Node* Tree_manager::get_find_node(int findnum, BST_Node* currnode){
+        if(currnode->bst_num == findnum){
+            return currnode;
+        }
+        if(currnode->left!=NULL) get_find_node(findnum,currnode->left);
+        if(currnode->right!=NULL) get_find_node(findnum,currnode->right);
+        if(currnode->left==NULL && currnode->right == NULL) {return NULL;}
 }
 void Manager::PrintError(Result result) {  //------------Error_print----------
     cout << "===============Error=============" << endl;
@@ -586,6 +612,9 @@ void Manager::PrintSuc(Result result){ //ADD도 추가해줄것
             break;
         case Result::Move:
             cout<<"Move";
+            break;
+        case Result::Select:
+            cout<<"Select";
             break;
     }
     cout<<"============="<<endl;

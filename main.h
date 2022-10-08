@@ -60,6 +60,7 @@ public:
 class Tree_manager{
 private:
     BST_Node* bst_root=NULL;
+    string im_path="";
 public:
     Tree_manager(){}
     void make_bst(Loaded_LIST_Node* bring_node);
@@ -67,10 +68,13 @@ public:
     void delete_small();
     void BST_Print(BST_Node* currnode);
     BST_Node* get_bst_root(){return bst_root;}
+    BST_Node* get_find_node(int findnum,BST_Node* root);
     void postorder(BST_Node* root, string word);
     int search(char *text, char *pat);
-    void preprocess_case2(int *shift, int *bpos, char *pat, int m);
-    void preprocess_case1(int *shift, int *bpos,char *pat, int m);
+    void process_2(int *shift, int *bpos, char *pat, int m);
+    void process_1(int *shift, int *bpos,char *pat, int m);
+    void get_put_path(string path){im_path = path;}
+    
 };
 
 class Manager
@@ -93,6 +97,7 @@ private:
     Result MOVE(const char* filepath,Loaded_LIST*list, Tree_manager* tree);
     Result PRINT(Tree_manager* tree);
     Result SEARCH(Tree_manager* tree, string word);
+    Result SELECT(Tree_manager* tree, int finde_num);
 };
 
 

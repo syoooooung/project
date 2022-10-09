@@ -22,8 +22,10 @@ enum Result{ //Enum fo errorcode and successcode
     Print=500,
     Search=600,
     Select=700,
+    dontknow=777,
     Edit=800,
     Exit=900
+
 
 };
 class Loaded_LIST_Node{   // -------------[Loaded_LIST_Node]-----------

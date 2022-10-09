@@ -182,8 +182,8 @@ void Manager::RUN(const char* filepath)
             else if(strcmp(command,"MODIFY")==0){PrintError(Modify);}
             else if(strcmp(command,"SEARCH")==0){PrintError(Search);}
             else if(strcmp(command,"SELECT")==0){PrintError(Select);}     
-            //else if(strcmp(command,"EDIT")==0){}//PrintError(Edit);}
-            else{}
+            else if(strcmp(command,"EDIT")==0){}//PrintError(Edit);}
+            else{PrintError(dontknow);}
         }
 
     }
@@ -331,7 +331,7 @@ Result Manager::EDIT(Database_BST* tree, string cmd){
                 s.pop(); //and pop
             }
         }
-    string change_path ="./"+pre_name+"_flipped.RAW"; //make new path
+    string change_path ="./Result/"+pre_name+"_flipped.RAW"; //make new path
     const char* change_path1=change_path.c_str(); //change string=>constchar
     output_file = fopen(change_path1 , "wb");
     fwrite(output_data, sizeof(unsigned char), width*height, output_file);
@@ -357,7 +357,7 @@ Result Manager::EDIT(Database_BST* tree, string cmd){
                 q.pop(); //pop
             }
         }
-        string change_path ="./"+pre_name+"_adjusted.RAW"; //make path
+        string change_path ="./Result/"+pre_name+"_adjusted.RAW"; //make path
         const char* change_path1=change_path.c_str(); //string=>const char*
         output_file = fopen(change_path1 , "wb");
         fwrite(output_data, sizeof(unsigned char), width*height, output_file);
@@ -371,7 +371,7 @@ Result Manager::EDIT(Database_BST* tree, string cmd){
                 output_data[i][j] = round(tmp_num); // 4=>1 and round
             }
         }
-        string change_path ="./"+pre_name+"_resized.RAW"; //make path
+        string change_path ="./Result/"+pre_name+"_resized.RAW"; //make path
         const char* change_path1=change_path.c_str(); //string=>const char*
         output_file = fopen(change_path1 , "wb");
         fwrite(output_data, sizeof(unsigned char), 128*128, output_file);
@@ -713,6 +713,9 @@ void Manager::PrintError(Result result) {  //------------Error_print----------
         cout<<700<<endl;
         flog<<700<<endl;
         break;
+    case Result::dontknow:
+        cout<<777<<endl;
+        flog<<777<<endl;
     case Result::Edit:
         cout<<800<<endl;
         flog<<800<<endl;
